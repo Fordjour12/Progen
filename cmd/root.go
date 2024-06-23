@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -28,8 +29,52 @@ var createProjectCmd = &cobra.Command{
 	},
 }
 
-func createProject(projectName string, projectType string) {
-	fmt.Printf("Creating project %s of type %s\n", projectName, projectType)
+func createProject(projectName, projectType string) {
+	templateDir := fmt.Sprintf("templates/%s", projectType)
+	destinationDir := projectName
+	fmt.Printf("Creating project %s of from %s\n", destinationDir, templateDir)
+
+	if err := os.Mkdir(destinationDir, 0755); err != nil {
+		fmt.Printf("Error creating project %v", err)
+		return
+	}
+
+	err := filepath.Walk(templateDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(templateDir, path)
+		if err != nil {
+			return err
+		}
+
+		destPath := filepath.Join(destinationDir, relPath)
+		if info.IsDir() {
+			// create directory if it does not exist
+			if err := os.MkdirAll(destPath, info.Mode()); err != nil {
+				return err
+			}
+		} else {
+			// copy file content
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			if err := os.WriteFile(destPath, content, info.Mode()); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		fmt.Printf("Error creating template files %v", err)
+		return
+	}
+
+	fmt.Printf("Project %s created successfully form %s", projectName, templateDir)
 }
 
 func init() {
