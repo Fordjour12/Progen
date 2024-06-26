@@ -1,89 +1,45 @@
+/*
+Copyright © 2024 Bobie Fordjour McCamble Kofi<fordjourbobiem@gmail.com>
+*/
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
 
+// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "Progen",
+	Use:   "progen",
 	Short: "Progen is a simple tool to generate project structure",
-	Long:  "Progen scaffolds new project using a specific framework like React, Sveltekit, Nextjs or GoLang with predefined convection and tools instead of creating directories from scratch every time. Progen automates this process for you.",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Progen is a simple tool to scaffold projects use `progen --help` for more information.")
-	},
+	Long: ` Progen scaffolds new project using a specific framework like 
+	React, Sveltekit, Nextjs or GoLang with predefined convection 
+	and tools instead of creating directories from scratch every time. 
+	Progen automates this process for you.`,
+	// Uncomment the following line if your bare application
+	// has an action associated with it:
+	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
-var createProjectCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new project",
-	Long:  "Create a new project using a specific framework like React, Sveltekit, Nextjs or GoLang with predefined convection and tools instead of creating directories from scratch every time. Progen automates this process for you.",
-	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		projectName := args[0]
-		projectType := args[1]
-		createProject(projectName, projectType)
-	},
-}
-
-func createProject(projectName, projectType string) {
-	templateDir := fmt.Sprintf("templates/%s", projectType)
-	destinationDir := projectName
-	fmt.Printf("Creating project %s of from %s\n", destinationDir, templateDir)
-
-	if err := os.Mkdir(destinationDir, 0755); err != nil {
-		fmt.Printf("Error creating project %v", err)
-		return
-	}
-
-	err := filepath.Walk(templateDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		relPath, err := filepath.Rel(templateDir, path)
-		if err != nil {
-			return err
-		}
-
-		destPath := filepath.Join(destinationDir, relPath)
-		if info.IsDir() {
-			// create directory if it does not exist
-			if err := os.MkdirAll(destPath, info.Mode()); err != nil {
-				return err
-			}
-		} else {
-			// copy file content
-			content, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-
-			if err := os.WriteFile(destPath, content, info.Mode()); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() {
+	err := rootCmd.Execute()
 	if err != nil {
-		fmt.Printf("Error creating template files %v", err)
-		return
+		os.Exit(1)
 	}
-
-	fmt.Printf("Project %s created successfully form %s", projectName, templateDir)
 }
 
 func init() {
-	rootCmd.AddCommand(createProjectCmd)
-}
 
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	// Here you will define your flags and configuration settings.
+	// Cobra supports persistent flags, which, if defined here,
+	// will be global for your application.
+
+	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.progen.yaml)")
+
+	// Cobra also supports local flags, which will only run
+	// when this action is called directly.
+	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
